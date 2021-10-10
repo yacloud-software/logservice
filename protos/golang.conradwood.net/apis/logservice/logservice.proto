@@ -1,0 +1,87 @@
+
+syntax = "proto3";
+
+package logservice;
+option java_package = "net.conradwood.golang.apis.logservice";
+import "golang.conradwood.net/apis/common/common.proto";
+
+message LogAppDef {
+  string Appname = 2;
+  string Repository = 3; // deprecated, use repoid
+  string Groupname = 4;
+  string Namespace = 5;
+  string DeploymentID = 6;
+  string StartupID = 7;
+  uint64 RepoID=8;
+}
+
+message LogLine {
+  int64 Time = 1;
+  string Line = 2;
+  int32 Level = 3;
+  string Status = 4;
+}
+
+message LogRequest {
+  LogAppDef AppDef = 1;
+  repeated LogLine Lines = 2;
+}
+message LogResponse {
+}
+
+message LogFilter {
+  string Host = 1;
+  string UserName = 2;
+  LogAppDef AppDef = 3;
+  string FuzzyMatch = 4;
+}
+
+message GetLogRequest {
+  // logical OR of stuff to retrieve - if null means EVERYTHING
+  repeated LogFilter LogFilter = 1;
+  // minimum logid to retrieve (0=all) (negative means last n lines)
+  int64 MinimumLogID = 2;
+}
+
+message LogEntry {
+  uint64 ID = 1;
+  string Host = 2;
+  string UserName = 3;
+  uint64 Occured = 4;
+  LogAppDef AppDef = 5;
+  string Line = 6;
+  string Status = 7;
+}
+
+message GetLogResponse {
+  repeated LogEntry Entries = 1;
+}
+message GetHostLogResponse {
+  // grouped by host
+  repeated GetLogResponse Entries = 1;
+}
+
+message GetHostLogRequest {
+  // logical OR of stuff to retrieve - if null means EVERYTHING
+  repeated LogFilter LogFilter = 1;
+  // minimum logid to retrieve (0=all) (negative means last n lines)
+  int64 MinimumLogID = 2;
+}
+
+message GetAppsResponse {
+  repeated LogAppDef AppDef = 1;
+}
+
+message CloseLogRequest {
+  LogAppDef AppDef = 1;
+  int32 ExitCode = 2;
+}
+
+service LogService {
+  rpc LogCommandStdout(LogRequest) returns (LogResponse);
+  rpc GetLogCommandStdout(GetLogRequest) returns (GetLogResponse);
+  rpc GetApps(common.Void) returns (GetAppsResponse);
+  rpc CloseLog(CloseLogRequest) returns (common.Void);
+  // the entries for an application
+  rpc GetAppLastEntries(GetHostLogRequest) returns (GetHostLogResponse);
+}

@@ -1,10 +1,10 @@
 package main
 
 import (
+    "golang.conradwood.net/go-easyops/authremote"
 	"fmt"
 	pn "golang.conradwood.net/apis/codeanalyser"
 	pb "golang.conradwood.net/apis/logservice"
-	"golang.conradwood.net/go-easyops/tokens"
 	"time"
 )
 
@@ -34,6 +34,6 @@ func checkPanic(ad *pb.LogAppDef, lines []string) {
 		}
 		pdr.Lines = append(pdr.Lines, ll)
 	}
-	ctx := tokens.ContextWithToken()
+	ctx := authremote.Context()
 	ca.AnalyseLogs(ctx, &pdr)
 }

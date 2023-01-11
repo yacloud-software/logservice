@@ -1,13 +1,13 @@
 package main
 
 import (
+    "golang.conradwood.net/go-easyops/authremote"
 	"flag"
 	"fmt"
 	"golang.conradwood.net/apis/common"
 	pb "golang.conradwood.net/apis/logservice"
 	"golang.conradwood.net/go-easyops/client"
 	"golang.conradwood.net/go-easyops/logger"
-	"golang.conradwood.net/go-easyops/tokens"
 	"golang.conradwood.net/go-easyops/utils"
 	"os"
 	"os/signal"
@@ -62,7 +62,7 @@ func main() {
 
 func showLog() {
 
-	ctx := tokens.ContextWithToken()
+	ctx := authremote.Context()
 	minlog := int64(0 - *maxLines)
 	glr := pb.GetLogRequest{
 		MinimumLogID: minlog,
@@ -92,7 +92,7 @@ func follow() {
 		addFilters(&glr)
 		fmt.Fprintf(os.Stderr, "Querying %d (logid: %d)...\r", i, minlog)
 		i++
-		ctx := tokens.ContextWithToken()
+		ctx := authremote.Context()
 		lr, err := logServer.GetLogCommandStdout(ctx, &glr)
 		if err == nil {
 			sortEntries(lr.Entries)
@@ -163,7 +163,7 @@ func addFilters(glr *pb.GetLogRequest) {
 
 // given a comma-delimeted string, will find logappdefs
 func filterToApps() []*pb.LogAppDef {
-	ctx := tokens.ContextWithToken()
+	ctx := authremote.Context()
 	x, xe := logServer.GetApps(ctx, &common.Void{})
 	utils.Bail("Failed to get apps", xe)
 	var res []*pb.LogAppDef
@@ -179,7 +179,7 @@ func printApps(err error) {
 		return
 	}
 	fmt.Printf("Getting available apps...\n")
-	ctx := tokens.ContextWithToken()
+	ctx := authremote.Context()
 	x, xe := logServer.GetApps(ctx, &common.Void{})
 	if xe == nil {
 		for _, ld := range x.AppDef {

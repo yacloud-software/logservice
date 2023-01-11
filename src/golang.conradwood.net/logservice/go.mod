@@ -6,7 +6,7 @@ require (
 	golang.conradwood.net/apis/codeanalyser v1.1.1549
 	golang.conradwood.net/apis/common v1.1.2073
 	golang.conradwood.net/apis/logservice v1.1.2073
-	golang.conradwood.net/go-easyops v0.1.15158
+	golang.conradwood.net/go-easyops v0.1.15159
 	google.golang.org/grpc v1.51.0
 )
 
@@ -33,7 +33,7 @@ require (
 	golang.org/x/net v0.4.0 // indirect
 	golang.org/x/sys v0.3.0 // indirect
 	golang.org/x/text v0.5.0 // indirect
-	google.golang.org/genproto v0.0.0-20220519153652-3a47de7e79bd // indirect
+	google.golang.org/genproto v0.0.0-20200526211855-cb27e3aa2013 // indirect
 	google.golang.org/protobuf v1.28.1 // indirect
 )
 

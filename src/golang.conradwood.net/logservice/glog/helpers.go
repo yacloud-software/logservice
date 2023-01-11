@@ -1,10 +1,10 @@
 package main
 
 import (
+    "golang.conradwood.net/go-easyops/authremote"
 	"fmt"
 	"golang.conradwood.net/apis/common"
 	pb "golang.conradwood.net/apis/logservice"
-	"golang.conradwood.net/go-easyops/tokens"
 	"golang.conradwood.net/go-easyops/utils"
 	"sort"
 	"strings"
@@ -40,7 +40,7 @@ func addFilters(glr *pb.GetLogRequest) {
 
 // given a comma-delimeted string, will find logappdefs
 func filterToApps() []*pb.LogAppDef {
-	ctx := tokens.ContextWithToken()
+	ctx := authremote.Context()
 	x, xe := logServer.GetApps(ctx, &common.Void{})
 	utils.Bail("Failed to get apps", xe)
 	var res []*pb.LogAppDef

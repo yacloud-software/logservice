@@ -6,12 +6,12 @@ package main
 // we'll try with this tool to provide a more intuitive command line
 
 import (
+    "golang.conradwood.net/go-easyops/authremote"
 	//"context"
 	"flag"
 	"fmt"
 	pb "golang.conradwood.net/apis/logservice"
 	"golang.conradwood.net/go-easyops/client"
-	"golang.conradwood.net/go-easyops/tokens"
 	"golang.conradwood.net/go-easyops/utils"
 	"os"
 )
@@ -53,7 +53,7 @@ func closedLog() {
 	mli := int64(0 - *numentries)
 	hr := &pb.GetHostLogRequest{MinimumLogID: mli}
 	hr.LogFilter = lr.LogFilter
-	res, err := logServer.GetAppLastEntries(tokens.ContextWithToken(), hr)
+	res, err := logServer.GetAppLastEntries(authremote.Context(), hr)
 	utils.Bail("Failed to get logs", err)
 	for _, rp := range res.Entries {
 		sortEntries(rp.Entries)

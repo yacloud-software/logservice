@@ -6,7 +6,7 @@ require (
 	golang.conradwood.net/apis/codeanalyser v1.1.1549
 	golang.conradwood.net/apis/common v1.1.2073
 	golang.conradwood.net/apis/logservice v1.1.2073
-	golang.conradwood.net/go-easyops v0.1.15159
+	golang.conradwood.net/go-easyops v0.1.15337
 	google.golang.org/grpc v1.51.0
 )
 

@@ -105,7 +105,8 @@ func main() {
 ***********************************/
 type LogService struct{}
 
-/***************************************************************************************
+/*
+**************************************************************************************
 ******** BIG FAT WARNING    ----- READ ME --------
 ******** BIG FAT WARNING    ----- READ ME --------
 
@@ -117,11 +118,12 @@ type LogService struct{}
 
 ******** BIG FAT WARNING    ----- READ ME --------
 ******** BIG FAT WARNING    ----- READ ME --------
-***************************************************************************************/
+**************************************************************************************
+ */
 func (s *LogService) LogCommandStdout(ctx context.Context, lr *pb.LogRequest) (*pb.LogResponse, error) {
 	peer, ok := peer.FromContext(ctx)
 	if !ok {
-		return nil, errors.New("Error getting peer ")
+		return nil, errors.New("Error getting peer")
 	}
 	peerhost, _, err := net.SplitHostPort(peer.Addr.String())
 	if err != nil {

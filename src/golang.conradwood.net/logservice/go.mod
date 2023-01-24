@@ -6,7 +6,7 @@ require (
 	golang.conradwood.net/apis/codeanalyser v1.1.2107
 	golang.conradwood.net/apis/common v1.1.2107
 	golang.conradwood.net/apis/logservice v1.1.2073
-	golang.conradwood.net/go-easyops v0.1.15624
+	golang.conradwood.net/go-easyops v0.1.15769
 	google.golang.org/grpc v1.52.0
 )
 
@@ -24,7 +24,7 @@ require (
 	golang.conradwood.net/apis/autodeployer v1.1.2107 // indirect
 	golang.conradwood.net/apis/deploymonkey v1.1.2107 // indirect
 	golang.conradwood.net/apis/echoservice v1.1.2107 // indirect
-	golang.conradwood.net/apis/errorlogger v1.1.2107 // indirect
+	golang.conradwood.net/apis/errorlogger v1.1.2125 // indirect
 	golang.conradwood.net/apis/framework v1.1.2107 // indirect
 	golang.conradwood.net/apis/goeasyops v1.1.2107 // indirect
 	golang.conradwood.net/apis/objectstore v1.1.2107 // indirect

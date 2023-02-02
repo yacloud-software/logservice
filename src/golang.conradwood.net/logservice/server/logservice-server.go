@@ -153,6 +153,7 @@ func (s *LogService) LogCommandStdout(ctx context.Context, lr *pb.LogRequest) (*
 		}
 	}
 	appname := filepath.Base(lr.AppDef.Appname)
+	appname = fmt.Sprintf("%s/%d", appname, lr.AppDef.BuildID)
 	for _, ll := range lr.Lines {
 		line := ll.Line
 		if len(line) > 999 {

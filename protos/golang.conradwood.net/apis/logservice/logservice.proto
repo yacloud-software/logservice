@@ -13,6 +13,7 @@ message LogAppDef {
   string DeploymentID = 6;
   string StartupID = 7;
   uint64 RepoID=8;
+  uint64 BuildID=9;
 }
 
 message LogLine {

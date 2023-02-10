@@ -1,11 +1,11 @@
 package main
 
 import (
-    "golang.conradwood.net/go-easyops/authremote"
 	"flag"
 	"fmt"
 	"golang.conradwood.net/apis/common"
 	pb "golang.conradwood.net/apis/logservice"
+	"golang.conradwood.net/go-easyops/authremote"
 	"golang.conradwood.net/go-easyops/client"
 	"golang.conradwood.net/go-easyops/logger"
 	"golang.conradwood.net/go-easyops/utils"
@@ -47,7 +47,7 @@ func main() {
 		showLog()
 		os.Exit(0)
 	}
-	queue, err := logger.NewAsyncLogQueue(*appName, *repo, *groupname, *namespace, *deplid)
+	queue, err := logger.NewAsyncLogQueue(*appName, *repo, 0, *groupname, *namespace, *deplid)
 	utils.Bail("Failed to create log queue", err)
 	for _, line := range lines {
 		queue.LogCommandStdout(line, "EXECUSER")

@@ -20,6 +20,7 @@ var (
 	namespace  = flag.String("namespace", "", "the namespace to log")
 	deplid     = flag.String("deploymentid", "", "The deployment id to log")
 	sid        = flag.String("startupid", "", "The startup id to log")
+	build      = flag.Uint64("build", 0, "the buildid")
 	is_running = false
 )
 
@@ -161,7 +162,7 @@ func (c *com) checkLogger() {
 	if c.logger != nil {
 		return
 	}
-	l, err := logger.NewAsyncLogQueue(*app_name, *repo, *groupname, *namespace, *deplid)
+	l, err := logger.NewAsyncLogQueue(*app_name, *build, *repo, *groupname, *namespace, *deplid)
 	if err != nil {
 		fmt.Printf("Failed to initialize logger! %s\n", err)
 		// it's the logger-wrapper! what is it supposed to do if not log-wrap?

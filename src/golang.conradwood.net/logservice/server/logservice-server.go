@@ -139,7 +139,7 @@ func (s *LogService) LogCommandStdout(ctx context.Context, lr *pb.LogRequest) (*
 	lineCounter.With(l).Add(float64(len(lr.Lines)))
 	bc := 0
 	for _, l := range lr.Lines {
-		bc = bc + len(l.Line)
+		bc = bc + len(l.Line) + len(l.BinLine)
 	}
 	byteCounter.With(l).Add(float64(bc))
 
@@ -155,7 +155,7 @@ func (s *LogService) LogCommandStdout(ctx context.Context, lr *pb.LogRequest) (*
 	appname := filepath.Base(lr.AppDef.Appname)
 	appname = fmt.Sprintf("%s/%d", appname, lr.AppDef.BuildID)
 	for _, ll := range lr.Lines {
-		line := ll.Line
+		line := ll.Line + string(ll.BinLine)
 		if len(line) > 999 {
 			line = line[0:999]
 		}

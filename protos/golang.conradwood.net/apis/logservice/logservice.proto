@@ -1,4 +1,3 @@
-
 syntax = "proto3";
 
 package logservice;
@@ -7,7 +6,7 @@ import "golang.conradwood.net/apis/common/common.proto";
 
 message LogAppDef {
   string Appname = 2;
-  string Repository = 3; // deprecated, use repoid
+  string DISRepository = 3; // deprecated, use repoid
   string Groupname = 4;
   string Namespace = 5;
   string DeploymentID = 6;
@@ -18,9 +17,10 @@ message LogAppDef {
 
 message LogLine {
   int64 Time = 1;
-  string Line = 2;
+  string Line = 2; // deprecated, use BinLine
   int32 Level = 3;
   string Status = 4;
+  bytes BinLine=5; // line binary 
 }
 
 message LogRequest {

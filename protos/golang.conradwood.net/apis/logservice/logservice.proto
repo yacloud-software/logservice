@@ -6,7 +6,7 @@ import "golang.conradwood.net/apis/common/common.proto";
 
 message LogAppDef {
   string Appname = 2;
-  string DISRepository = 3; // deprecated, use repoid
+  string Repository = 3; // deprecated, use repoid
   string Groupname = 4;
   string Namespace = 5;
   string DeploymentID = 6;

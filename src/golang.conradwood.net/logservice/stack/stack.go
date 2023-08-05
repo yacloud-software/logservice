@@ -5,7 +5,8 @@ import (
 )
 
 var (
-	stacks = make(map[string]*Stack)
+	stacklock sync.Mutex
+	stacks    = make(map[string]*Stack)
 )
 
 const (
@@ -18,6 +19,8 @@ type Stack struct {
 }
 
 func Get(stackname string) *Stack {
+	stacklock.Lock()
+	defer stacklock.Unlock()
 	stack := stacks[stackname]
 	if stack == nil {
 		stack = &Stack{}

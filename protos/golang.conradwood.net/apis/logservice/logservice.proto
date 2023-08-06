@@ -52,6 +52,7 @@ message LogEntry {
   LogAppDef AppDef = 5;
   string Line = 6;
   string Status = 7;
+  bytes BinLine =8;
 }
 
 message GetLogResponse {

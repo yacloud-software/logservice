@@ -119,10 +119,12 @@ func sortEntries(entries []*pb.LogEntry) {
 func printLogEntry(e *pb.LogEntry, lastDate *string) {
 	t := time.Unix(int64(e.Occured), 0)
 	bin := filepath.Base(e.AppDef.Appname)
+
 	txt := e.Line
 	if len(e.BinLine) != 0 {
 		txt = txt + string(e.BinLine)
 	}
+
 	if *long {
 		host := e.Host
 		for len(host) < 15 {

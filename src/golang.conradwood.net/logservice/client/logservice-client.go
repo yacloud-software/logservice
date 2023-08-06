@@ -119,13 +119,17 @@ func sortEntries(entries []*pb.LogEntry) {
 func printLogEntry(e *pb.LogEntry, lastDate *string) {
 	t := time.Unix(int64(e.Occured), 0)
 	bin := filepath.Base(e.AppDef.Appname)
+	txt := e.Line
+	if len(e.BinLine) != 0 {
+		txt = txt + string(e.BinLine)
+	}
 	if *long {
 		host := e.Host
 		for len(host) < 15 {
 			host = " " + host
 		}
 		ts := t.Format("2006-01-02 15:04:05.999999999 -0700 MST")
-		fmt.Printf("%s %s %s repo:%03d app:%s: %s\n", ts, host, e.Status, e.AppDef.RepoID, bin, e.Line)
+		fmt.Printf("%s %s %s repo:%03d app:%s: %s\n", ts, host, e.Status, e.AppDef.RepoID, bin, txt)
 	} else {
 		ts := t.Format("2006-01-02 15:04:05")
 		if len(bin) > minappnamelen {
@@ -134,7 +138,7 @@ func printLogEntry(e *pb.LogEntry, lastDate *string) {
 		for len(bin) < minappnamelen {
 			bin = " " + bin
 		}
-		fmt.Printf("%s %s: %s\n", ts, bin, e.Line)
+		fmt.Printf("%s %s: %s\n", ts, bin, txt)
 	}
 }
 

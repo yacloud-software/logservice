@@ -37,7 +37,8 @@ func addToBuf(ctx context.Context, peer string, lr *pb.LogRequest) {
 	ll.Unlock()
 }
 
-/***************************************************************************************
+/*
+**************************************************************************************
 ******** BIG FAT WARNING    ----- READ ME --------
 ******** BIG FAT WARNING    ----- READ ME --------
 
@@ -48,7 +49,8 @@ func addToBuf(ctx context.Context, peer string, lr *pb.LogRequest) {
 
 ******** BIG FAT WARNING    ----- READ ME --------
 ******** BIG FAT WARNING    ----- READ ME --------
-***************************************************************************************/
+**************************************************************************************
+ */
 func (s *LogService) GetLogCommandStdout(ctx context.Context, lr *pb.GetLogRequest) (*pb.GetLogResponse, error) {
 	res := &pb.GetLogResponse{}
 	for _, l := range logs {
@@ -73,6 +75,7 @@ func (l *logbuf) LogEntry() []*pb.LogEntry {
 			AppDef:   l.log.AppDef,
 			Line:     line.Line,
 			Status:   line.Status,
+			BinLine:  line.BinLine,
 		}
 		res = append(res, le)
 	}

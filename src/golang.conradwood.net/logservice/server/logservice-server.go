@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"flag"
@@ -17,6 +18,7 @@ import (
 	"net"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 )
@@ -154,10 +156,17 @@ func (s *LogService) LogCommandStdout(ctx context.Context, lr *pb.LogRequest) (*
 	}
 	appname := filepath.Base(lr.AppDef.Appname)
 	appname = fmt.Sprintf("%s/%d", appname, lr.AppDef.BuildID)
+	writebuf := &bytes.Buffer{}
 	for _, ll := range lr.Lines {
-		line := ll.Line + string(ll.BinLine)
+		line := append(ll.BinLine, []byte(ll.Line)...)
 		if len(line) > 999 {
 			line = line[0:999]
+		}
+		writebuf.Write(line)
+	}
+	for _, line := range strings.Split(string(writebuf.Bytes()), "\n") {
+		if line == "" {
+			continue
 		}
 		ts := time.Now().Format("2/1/2006 15:04:05.000")
 		sline := fmt.Sprintf("[%s] [%s] [%s]: \"%s\"\n", ts, peerhost, appname, line)

@@ -16,7 +16,7 @@ var (
 	log_status = flag.String("status", "", "The status string to log")
 	app_name   = flag.String("appname", "", "The name of the application to log")
 	repo       = flag.Uint64("repository", 0, "The name of the repository to log")
-	groupname  = flag.String("groupname", "", "The name of the group to log")
+	groupname  = flag.String("groupname", "testing", "The name of the group to log")
 	namespace  = flag.String("namespace", "", "the namespace to log")
 	deplid     = flag.String("deploymentid", "", "The deployment id to log")
 	sid        = flag.String("startupid", "", "The startup id to log")
@@ -111,8 +111,7 @@ func run(cmd *com) error {
 
 // async, whenever a process exits...
 func waitForCommand(cmd *com) error {
-	lineOut := new(LineReader)
-	buf := make([]byte, 2)
+	buf := make([]byte, 1024)
 	for {
 		ct, err := cmd.Stdout.Read(buf)
 		if err != nil {
@@ -121,12 +120,10 @@ func waitForCommand(cmd *com) error {
 			}
 			break
 		}
-		line := lineOut.gotBytes(buf, ct)
-		if line != "" {
-			cmd.checkLogger()
-			fmt.Printf("STDOUT: \"%s\"\n", line)
-			cmd.logger.LogCommandStdout(line, "EXECUSER")
-		}
+		cmd.checkLogger()
+		b := buf[:ct]
+		fmt.Print(string(b))
+		cmd.logger.Write(b)
 	}
 	err := cmd.Cmd.Wait()
 	if cmd.logger == nil {
@@ -139,8 +136,7 @@ func waitForCommand(cmd *com) error {
 
 // wait for stderr
 func waitForStderr(cmd *com) {
-	lineOut := new(LineReader)
-	buf := make([]byte, 2)
+	buf := make([]byte, 1024)
 	for {
 		ct, err := cmd.Stderr.Read(buf)
 		if err != nil {
@@ -149,12 +145,11 @@ func waitForStderr(cmd *com) {
 			}
 			break
 		}
-		line := lineOut.gotBytes(buf, ct)
-		if line != "" {
-			cmd.checkLogger()
-			fmt.Printf("STDERR: \"%s\"\n", line)
-			cmd.logger.LogCommandStdout(line, "EXECUSER")
-		}
+		b := buf[:ct]
+		cmd.checkLogger()
+		fmt.Print(string(b))
+		cmd.logger.Write(b)
+
 	}
 }
 
@@ -170,4 +165,5 @@ func (c *com) checkLogger() {
 	} else {
 		c.logger = l
 	}
+	c.logger.SetStatus("EXECUSER")
 }

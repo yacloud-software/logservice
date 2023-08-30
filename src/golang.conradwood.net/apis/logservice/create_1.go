@@ -1,6 +1,6 @@
 // client create: LogServiceClient
 /*
-  Created by /srv/home/cnw/devel/go/go-tools/src/golang.conradwood.net/gotools/protoc-gen-cnw/protoc-gen-cnw.go
+  Created by /home/cnw/devel/go/yatools/src/golang.yacloud.eu/yatools/protoc-gen-cnw/protoc-gen-cnw.go
 */
 
 /* geninfo:
@@ -13,7 +13,7 @@
    varname   : client_LogServiceClient_0
    clientname: LogServiceClient
    servername: LogServiceServer
-   gscvname  : logservice.LogService
+   gsvcname  : logservice.LogService
    lockname  : lock_LogServiceClient_0
    activename: active_LogServiceClient_0
 */
@@ -62,3 +62,7 @@ func GetLogServiceClient() LogServiceClient {
 }
 
 func LogServiceLookupID() string { return "logservice.LogService" } // returns the ID suitable for lookup in the registry. treat as opaque, subject to change.
+
+func init() {
+   client.RegisterDependency("logservice.LogService")
+}

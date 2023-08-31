@@ -25,9 +25,11 @@ import (
 
 // static variables for flag parser
 var (
+	output_lock      sync.Mutex
 	logfile          *os.File
 	logfileName      = flag.String("logfile", "/var/log/logservice/full.log", "logfile to write to")
 	port             = flag.Int("port", 10000, "The server port")
+	log_to_stdout    = flag.Bool("log_to_stdout", false, "if true log to stdout - DANGEROUS DO NOT USE IN PRODUCTION!!)")
 	debug            = flag.Bool("debug", false, "turn debug output on - DANGEROUS DO NOT USE IN PRODUCTION!")
 	clean_on_startup = flag.Bool("clean_on_startup", false, "if true, removes old log files from the database on startup")
 	reqCounter       = prometheus.NewCounterVec(
@@ -123,6 +125,8 @@ type LogService struct{}
 **************************************************************************************
  */
 func (s *LogService) LogCommandStdout(ctx context.Context, lr *pb.LogRequest) (*pb.LogResponse, error) {
+	output_lock.Lock()
+	defer output_lock.Unlock()
 	peer, ok := peer.FromContext(ctx)
 	if !ok {
 		return nil, errors.New("Error getting peer")
@@ -138,10 +142,10 @@ func (s *LogService) LogCommandStdout(ctx context.Context, lr *pb.LogRequest) (*
 		"repositoryid": fmt.Sprintf("%d", lr.AppDef.RepoID),
 	}
 	reqCounter.With(l).Inc()
-	lineCounter.With(l).Add(float64(len(lr.Lines)))
+	//	lineCounter.With(l).Add(float64(len(lr.Lines)))
 	bc := 0
 	for _, l := range lr.Lines {
-		bc = bc + len(l.Line) + len(l.BinLine)
+		bc = bc + len(l.Message)
 	}
 	byteCounter.With(l).Add(float64(bc))
 
@@ -158,18 +162,42 @@ func (s *LogService) LogCommandStdout(ctx context.Context, lr *pb.LogRequest) (*
 	appname = fmt.Sprintf("%s/%d", appname, lr.AppDef.BuildID)
 	writebuf := &bytes.Buffer{}
 	for _, ll := range lr.Lines {
-		line := append(ll.BinLine, []byte(ll.Line)...)
-		if len(line) > 999 {
-			line = line[0:999]
-		}
-		writebuf.Write(line)
+		writebuf.Write(ll.Message)
 	}
-	for _, line := range strings.Split(string(writebuf.Bytes()), "\n") {
+	bt := writebuf.Bytes()
+	if len(bt) == 0 {
+		return &pb.LogResponse{}, nil
+	}
+	/*
+		borken := 0
+		if bt[len(bt)-1] != '\n' {
+			borken = 1
+		}
+		if !strings.HasSuffix(string(bt), "with lots of other characters just to make it a little bit more interesting we create a really long line so it wraps over quicker\n") {
+			borken = 2
+		}
+		if !strings.HasPrefix(string(bt), "line ") {
+			borken = 3
+		}
+
+		if borken > 0 {
+			for i, l := range lr.Lines {
+				fmt.Printf("Line %d:\n<%s>\n", i+1, string(l.Message))
+			}
+			fmt.Printf("%d lines\n", len(lr.Lines))
+			fmt.Printf("Broken: %d\n", borken)
+			fmt.Printf("Buffer hexdump:\n%s\n", utils.Hexdump("", bt))
+			fmt.Printf("Full buffer:\n%s\n", string(bt))
+			panic("<sigh>")
+		}
+	*/
+
+	for _, line := range strings.Split(string(bt), "\n") {
 		if line == "" {
 			continue
 		}
 		ts := time.Now().Format("2/1/2006 15:04:05.000")
-		sline := fmt.Sprintf("[%s] [%s] [%s]: \"%s\"\n", ts, peerhost, appname, line)
+		sline := fmt.Sprintf("[%s] [%s] [%s] [%s]: \"%s\"\n", ts, peerhost, lr.AppDef.DeploymentID, appname, line)
 		if !cmdline.Datacenter() {
 			fmt.Print(sline)
 		}

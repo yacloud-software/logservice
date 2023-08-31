@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	pb "golang.conradwood.net/apis/logservice"
+	"strings"
 	"sync"
 )
 
@@ -66,18 +67,20 @@ func (s *LogService) GetLogCommandStdout(ctx context.Context, lr *pb.GetLogReque
 }
 func (l *logbuf) LogEntry() []*pb.LogEntry {
 	var res []*pb.LogEntry
-	for _, line := range l.log.Lines {
-		le := &pb.LogEntry{
-			ID:       l.logid,
-			Host:     l.peer,
-			UserName: "",
-			Occured:  uint64(line.Time),
-			AppDef:   l.log.AppDef,
-			Line:     line.Line,
-			Status:   line.Status,
-			BinLine:  line.BinLine,
+	for _, ll := range l.log.Lines {
+		msg := ll.Message
+		for _, line := range strings.Split(string(msg), "\n") {
+			le := &pb.LogEntry{
+				ID:       l.logid,
+				Host:     l.peer,
+				UserName: "",
+				Occured:  uint64(ll.Time),
+				AppDef:   l.log.AppDef,
+				Line:     line,
+				Status:   ll.Status,
+			}
+			res = append(res, le)
 		}
-		res = append(res, le)
 	}
 	return res
 }

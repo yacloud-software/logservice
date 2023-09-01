@@ -19,13 +19,6 @@ import (
 // static variables for flag parser
 var (
 	log_status = flag.String("status", "", "The status string to log")
-	app_name   = flag.String("appname", "", "The name of the application to log")
-	repo       = flag.Uint64("repository", 0, "The name of the repository to log")
-	groupname  = flag.String("groupname", "testing", "The name of the group to log")
-	namespace  = flag.String("namespace", "", "the namespace to log")
-	deplid     = flag.String("deploymentid", "", "The deployment id to log")
-	sid        = flag.String("startupid", "", "The startup id to log")
-	build      = flag.Uint64("build", 0, "the buildid")
 	is_running = false
 	ls         logservice.LogServiceClient
 )

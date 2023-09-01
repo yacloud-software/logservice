@@ -212,7 +212,7 @@ func (s *LogService) LogCommandStdout(ctx context.Context, req *pb.LogRequest) (
 		} else {
 			sline = fmt.Sprintf("[%s] [%s] [%s]: \"%s\"\n", ts, peerhost, appname, line)
 		}
-		if !cmdline.Datacenter() {
+		if !cmdline.Datacenter() && *log_to_stdout {
 			fmt.Print(sline)
 		}
 		if logfile != nil {

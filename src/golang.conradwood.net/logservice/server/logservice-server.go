@@ -9,6 +9,7 @@ import (
 	"golang.conradwood.net/apis/common"
 	pb "golang.conradwood.net/apis/logservice"
 	"golang.conradwood.net/go-easyops/cmdline"
+	gerr "golang.conradwood.net/go-easyops/errors"
 	"golang.conradwood.net/go-easyops/prometheus"
 	"golang.conradwood.net/go-easyops/server"
 	"golang.conradwood.net/go-easyops/utils"
@@ -21,6 +22,10 @@ import (
 	"strings"
 	"sync"
 	"time"
+)
+
+const (
+	LOGSERVICE_TESTING = false
 )
 
 // static variables for flag parser
@@ -124,7 +129,11 @@ type LogService struct{}
 ******** BIG FAT WARNING    ----- READ ME --------
 **************************************************************************************
  */
-func (s *LogService) LogCommandStdout(ctx context.Context, lr *pb.LogRequest) (*pb.LogResponse, error) {
+func (s *LogService) LogCommandStdout(ctx context.Context, req *pb.LogRequest) (*pb.LogResponse, error) {
+	a := req.AppDef
+	if a == nil {
+		return nil, gerr.InvalidArgs(ctx, "missing logappdef", "missing logappdef")
+	}
 	output_lock.Lock()
 	defer output_lock.Unlock()
 	peer, ok := peer.FromContext(ctx)
@@ -135,22 +144,22 @@ func (s *LogService) LogCommandStdout(ctx context.Context, lr *pb.LogRequest) (*
 	if err != nil {
 		return nil, errors.New(fmt.Sprintf("Invalid peer: %v", peer))
 	}
-	addToBuf(ctx, peerhost, lr)
+	addToBuf(ctx, peerhost, req)
 	rotate()
 	l := prometheus.Labels{
-		"appname":      lr.AppDef.Appname,
-		"repositoryid": fmt.Sprintf("%d", lr.AppDef.RepoID),
+		"appname":      req.AppDef.Appname,
+		"repositoryid": fmt.Sprintf("%d", req.AppDef.RepoID),
 	}
 	reqCounter.With(l).Inc()
-	//	lineCounter.With(l).Add(float64(len(lr.Lines)))
+	//	lineCounter.With(l).Add(float64(len(req.Lines)))
 	bc := 0
-	for _, l := range lr.Lines {
+	for _, l := range req.Lines {
 		bc = bc + len(l.Message)
 	}
 	byteCounter.With(l).Add(float64(bc))
 
 	if *debug {
-		fmt.Printf("Logging %d lines\n", len(lr.Lines))
+		fmt.Printf("Logging %d lines\n", len(req.Lines))
 	}
 	if logfile == nil {
 		logfile, err = utils.OpenWriteFile(*logfileName)
@@ -158,17 +167,17 @@ func (s *LogService) LogCommandStdout(ctx context.Context, lr *pb.LogRequest) (*
 			fmt.Printf("Failed to open file: %s\n", err)
 		}
 	}
-	appname := filepath.Base(lr.AppDef.Appname)
-	appname = fmt.Sprintf("%s/%d", appname, lr.AppDef.BuildID)
+	appname := filepath.Base(req.AppDef.Appname)
+	appname = fmt.Sprintf("%s/%d", appname, req.AppDef.BuildID)
 	writebuf := &bytes.Buffer{}
-	for _, ll := range lr.Lines {
+	for _, ll := range req.Lines {
 		writebuf.Write(ll.Message)
 	}
 	bt := writebuf.Bytes()
 	if len(bt) == 0 {
 		return &pb.LogResponse{}, nil
 	}
-	/*
+	if LOGSERVICE_TESTING {
 		borken := 0
 		if bt[len(bt)-1] != '\n' {
 			borken = 1
@@ -181,29 +190,34 @@ func (s *LogService) LogCommandStdout(ctx context.Context, lr *pb.LogRequest) (*
 		}
 
 		if borken > 0 {
-			for i, l := range lr.Lines {
+			for i, l := range req.Lines {
 				fmt.Printf("Line %d:\n<%s>\n", i+1, string(l.Message))
 			}
-			fmt.Printf("%d lines\n", len(lr.Lines))
+			fmt.Printf("%d lines\n", len(req.Lines))
 			fmt.Printf("Broken: %d\n", borken)
 			fmt.Printf("Buffer hexdump:\n%s\n", utils.Hexdump("", bt))
 			fmt.Printf("Full buffer:\n%s\n", string(bt))
 			panic("<sigh>")
 		}
-	*/
+	}
 
 	for _, line := range strings.Split(string(bt), "\n") {
 		if line == "" {
 			continue
 		}
 		ts := time.Now().Format("2/1/2006 15:04:05.000")
-		sline := fmt.Sprintf("[%s] [%s] [%s] [%s]: \"%s\"\n", ts, peerhost, lr.AppDef.DeploymentID, appname, line)
+		sline := ""
+		if LOGSERVICE_TESTING {
+			sline = fmt.Sprintf("[%s] [%s] [%s] [%s]: \"%s\"\n", ts, peerhost, req.AppDef.DeploymentID, appname, line)
+		} else {
+			sline = fmt.Sprintf("[%s] [%s] [%s]: \"%s\"\n", ts, peerhost, appname, line)
+		}
 		if !cmdline.Datacenter() {
 			fmt.Print(sline)
 		}
 		if logfile != nil {
 			logfile.WriteString(sline)
-			stack.Get(stackName(lr.AppDef)).Add(sline)
+			stack.Get(stackName(req.AppDef)).Add(sline)
 		}
 	}
 	resp := pb.LogResponse{}
@@ -225,6 +239,10 @@ func (s *LogService) GetApps(ctx context.Context, req *common.Void) (*pb.GetApps
 	return &pb.GetAppsResponse{}, nil
 }
 func (s *LogService) CloseLog(ctx context.Context, req *pb.CloseLogRequest) (*common.Void, error) {
+	a := req.AppDef
+	if a == nil {
+		return nil, gerr.InvalidArgs(ctx, "missing logappdef", "missing logappdef")
+	}
 	var err error
 	peer, ok := peer.FromContext(ctx)
 	if !ok {
@@ -241,7 +259,6 @@ func (s *LogService) CloseLog(ctx context.Context, req *pb.CloseLogRequest) (*co
 			fmt.Printf("Failed to open file: %s\n", err)
 		}
 	}
-	a := req.AppDef
 	appname := filepath.Base(a.Appname)
 	line := fmt.Sprintf("==== Close log: exit code %d for %s/%s/%s ======= ", req.ExitCode, a.Namespace, a.Groupname, a.Appname)
 	if len(line) > 999 {

@@ -1,13 +1,18 @@
 package main
 
 import (
+	"bytes"
 	"errors"
 	"flag"
 	"fmt"
-	"golang.conradwood.net/go-easyops/logger"
+	"golang.conradwood.net/apis/logservice"
+	"golang.conradwood.net/go-easyops/authremote"
+	"golang.conradwood.net/go-easyops/utils"
 	"io"
 	"os"
 	"os/exec"
+	"path/filepath"
+	"sync"
 	"syscall"
 )
 
@@ -22,16 +27,19 @@ var (
 	sid        = flag.String("startupid", "", "The startup id to log")
 	build      = flag.Uint64("build", 0, "the buildid")
 	is_running = false
+	ls         logservice.LogServiceClient
 )
 
 type com struct {
-	Cmd    *exec.Cmd
-	Name   string
-	Paras  []string
-	Stdout io.ReadCloser
-	Stderr io.ReadCloser
-	code   int
-	logger *logger.AsyncLogQueue
+	Cmd       *exec.Cmd
+	Name      string
+	Paras     []string
+	Stdout    io.ReadCloser
+	Stderr    io.ReadCloser
+	code      int
+	la        *logservice.LogAppDef
+	remainder []byte
+	lck       sync.Mutex
 }
 
 func (c *com) toString() string {
@@ -58,23 +66,34 @@ func main() {
 		fmt.Printf("Error: Missing name and/or parameters\n")
 		os.Exit(10)
 	}
+	ls = logservice.GetLogServiceClient()
 	name := paras[0]
 	if len(paras) > 1 {
 		paras = paras[1:]
 	}
-	cmd := com{Name: name, Paras: paras}
-	err := run(&cmd)
-	if cmd.logger != nil {
-		s := fmt.Sprintf("normal shutdown")
-		if err != nil {
-			s = fmt.Sprintf("shutdown with %s", err)
-		}
-		cmd.logger.LogCommandStdout(s, "TERMINATED")
-		e := cmd.logger.Close(0)
-		if e != nil {
-			fmt.Printf("Failed to flush logs: %s\n", e)
-		}
+	short_name := filepath.Base(name)
+	cmd := &com{
+		Name:  name,
+		Paras: paras,
+		la: &logservice.LogAppDef{
+			Appname:      short_name,
+			Repository:   short_name,
+			Groupname:    short_name,
+			Namespace:    short_name,
+			DeploymentID: utils.RandomString(32),
+			StartupID:    utils.RandomString(32),
+			RepoID:       0,
+			BuildID:      0,
+		},
 	}
+	err := run(cmd)
+	ctx := authremote.Context()
+	cmd.Write([]byte("TERMINATED\n"))
+	_, e := ls.CloseLog(ctx, &logservice.CloseLogRequest{AppDef: cmd.la, ExitCode: 0})
+	if e != nil {
+		fmt.Printf("Failed to flush logs: %s\n", e)
+	}
+
 	if err != nil {
 		fmt.Printf("Command %s returned with error: %s (thus logger-wrapper exiting with code 10)\n", cmd.Name, err)
 		os.Exit(10)
@@ -120,17 +139,11 @@ func waitForCommand(cmd *com) error {
 			}
 			break
 		}
-		cmd.checkLogger()
 		b := buf[:ct]
 		fmt.Print(string(b))
-		cmd.logger.Write(b)
+		cmd.Write(b)
 	}
 	err := cmd.Cmd.Wait()
-	if cmd.logger == nil {
-		fmt.Printf("No logger to close\n")
-	} else {
-		cmd.logger.Close(0)
-	}
 	return err
 }
 
@@ -146,24 +159,38 @@ func waitForStderr(cmd *com) {
 			break
 		}
 		b := buf[:ct]
-		cmd.checkLogger()
 		fmt.Print(string(b))
-		cmd.logger.Write(b)
-
+		cmd.Write(b)
 	}
 }
-
-func (c *com) checkLogger() {
-	if c.logger != nil {
+func (c *com) Write(buf []byte) {
+	c.lck.Lock()
+	bytes_to_sent := append(c.remainder, buf...)
+	idx := bytes.LastIndexByte(bytes_to_sent, '\n')
+	if idx == -1 {
+		// no \n in entire buffer, queue it a bit, do nothing
+		c.remainder = bytes_to_sent
+		c.lck.Unlock()
 		return
 	}
-	l, err := logger.NewAsyncLogQueue(*app_name, *build, *repo, *groupname, *namespace, *deplid)
-	if err != nil {
-		fmt.Printf("Failed to initialize logger! %s\n", err)
-		// it's the logger-wrapper! what is it supposed to do if not log-wrap?
-		os.Exit(10)
+	if idx == len(bytes_to_sent) {
+		// cr at the end of buf
+		c.remainder = c.remainder[:0]
 	} else {
-		c.logger = l
+		c.remainder = bytes_to_sent[idx+1:]
+		bytes_to_sent = bytes_to_sent[:idx+1] // include the '\n'
 	}
-	c.logger.SetStatus("EXECUSER")
+
+	c.lck.Unlock()
+	lr := &logservice.LogRequest{
+		AppDef: c.la,
+		Lines: []*logservice.LogLine{
+			&logservice.LogLine{Message: bytes_to_sent},
+		},
+	}
+	ctx := authremote.Context()
+	_, err := ls.LogCommandStdout(ctx, lr)
+	if err != nil {
+		fmt.Printf("FAILED TO LOG: %s\n", utils.ErrorString(err))
+	}
 }

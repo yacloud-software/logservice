@@ -124,16 +124,24 @@ func printLogEntry(e *pb.LogEntry, lastDate *string) {
 	if len(e.BinLine) != 0 {
 		txt = txt + string(e.BinLine)
 	}
-
+	if len(txt) == 0 {
+		return
+	}
 	if *long {
 		host := e.Host
 		for len(host) < 15 {
 			host = " " + host
 		}
 		ts := t.Format("2006-01-02 15:04:05.999999999 -0700 MST")
+		if e.Occured == 0 {
+			ts = "TIME_MISSING"
+		}
 		fmt.Printf("%s %s %s repo:%03d app:%s: %s\n", ts, host, e.Status, e.AppDef.RepoID, bin, txt)
 	} else {
 		ts := t.Format("2006-01-02 15:04:05")
+		if e.Occured == 0 {
+			ts = fmt.Sprintf("TIME_MISSING_%s", e.Host)
+		}
 		if len(bin) > minappnamelen {
 			minappnamelen = len(bin)
 		}

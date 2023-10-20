@@ -65,4 +65,5 @@ func LogServiceLookupID() string { return "logservice.LogService" } // returns t
 
 func init() {
    client.RegisterDependency("logservice.LogService")
+   AddService("logservice.LogService")
 }

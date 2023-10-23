@@ -97,7 +97,7 @@ func main() {
 	prometheus.MustRegister(reqCounter, failCounter, lineCounter, byteCounter)
 	go rotate_loop()
 	sd := server.NewServerDef()
-	sd.Port = *port
+	sd.SetPort(*port)
 	sd.Register = st
 	sd.NoAuth = true
 	err = server.ServerStartup(sd)

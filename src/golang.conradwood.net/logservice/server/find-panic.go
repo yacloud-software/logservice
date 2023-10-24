@@ -1,10 +1,10 @@
 package main
 
 import (
-    "golang.conradwood.net/go-easyops/authremote"
 	"fmt"
 	pn "golang.conradwood.net/apis/codeanalyser"
 	pb "golang.conradwood.net/apis/logservice"
+	"golang.conradwood.net/go-easyops/authremote"
 	"time"
 )
 

@@ -98,8 +98,8 @@ func main() {
 	go rotate_loop()
 	sd := server.NewServerDef()
 	sd.SetPort(*port)
-	sd.Register = st
-	sd.NoAuth = true
+	sd.SetRegister(st)
+	sd.SetNoAuth()
 	err = server.ServerStartup(sd)
 	if err != nil {
 		fmt.Printf("failed to start server: %s\n", err)

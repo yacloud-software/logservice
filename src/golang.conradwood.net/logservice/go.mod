@@ -39,6 +39,7 @@ require (
 	golang.org/x/sys v0.26.0 // indirect
 	golang.org/x/text v0.19.0 // indirect
 	golang.yacloud.eu/apis/autodeployer2 v1.1.3340 // indirect
+	golang.yacloud.eu/apis/crashanalyser v1.1.3384 // indirect
 	golang.yacloud.eu/apis/faultindicator v1.1.3340 // indirect
 	golang.yacloud.eu/apis/fscache v1.1.3340 // indirect
 	golang.yacloud.eu/apis/session v1.1.3376 // indirect

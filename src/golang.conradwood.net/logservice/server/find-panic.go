@@ -2,20 +2,13 @@ package main
 
 import (
 	"fmt"
-	pn "golang.conradwood.net/apis/codeanalyser"
 	pb "golang.conradwood.net/apis/logservice"
 	"golang.conradwood.net/go-easyops/authremote"
+	pn "golang.yacloud.eu/apis/crashanalyser"
 	"time"
 )
 
-var (
-	ca pn.CodeAnalyserServiceClient
-)
-
 func checkPanic(ad *pb.LogAppDef, lines []string) {
-	if ca == nil {
-		ca = pn.GetCodeAnalyserServiceClient()
-	}
 
 	// call the panic request thingie
 	pdr := pn.AnalyseLogRequest{
@@ -35,5 +28,5 @@ func checkPanic(ad *pb.LogAppDef, lines []string) {
 		pdr.Lines = append(pdr.Lines, ll)
 	}
 	ctx := authremote.Context()
-	ca.AnalyseLogs(ctx, &pdr)
+	pn.GetCrashAnalyserClient().AnalyseLogs(ctx, &pdr)
 }

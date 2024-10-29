@@ -16,7 +16,7 @@ func checkPanic(ad *pb.LogAppDef, lines []string) {
 		Namespace:  ad.Namespace,
 		Groupname:  ad.Groupname,
 		Appname:    ad.Appname,
-		Build:      0, // where do we get that from?
+		Build:      uint32(ad.BuildID), // where do we get that from?
 	}
 	for _, line := range lines {
 		ll := &pn.LogLine{

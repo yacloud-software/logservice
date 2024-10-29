@@ -11,7 +11,7 @@ import (
 func checkPanic(ad *pb.LogAppDef, lines []string) {
 
 	// call the panic request thingie
-	pdr := pn.AnalyseLogRequest{
+	pdr := &pn.AnalyseLogRequest{
 		Repository: fmt.Sprintf("%d", ad.RepoID),
 		Namespace:  ad.Namespace,
 		Groupname:  ad.Groupname,
@@ -28,5 +28,5 @@ func checkPanic(ad *pb.LogAppDef, lines []string) {
 		pdr.Lines = append(pdr.Lines, ll)
 	}
 	ctx := authremote.Context()
-	pn.GetCrashAnalyserClient().AnalyseLogs(ctx, &pdr)
+	pn.GetCrashAnalyserClient().AnalyseLogs(ctx, pdr)
 }

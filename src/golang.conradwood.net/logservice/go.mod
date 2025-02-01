@@ -5,7 +5,7 @@ go 1.22.2
 require (
 	golang.conradwood.net/apis/common v1.1.3627
 	golang.conradwood.net/apis/logservice v1.1.2495
-	golang.conradwood.net/go-easyops v0.1.33761
+	golang.conradwood.net/go-easyops v0.1.33838
 	golang.yacloud.eu/apis/crashanalyser v1.1.3384
 	google.golang.org/grpc v1.69.2
 )

@@ -3,10 +3,15 @@ package main
 import (
 	"flag"
 	"fmt"
-	"golang.conradwood.net/go-easyops/prometheus"
-	"golang.conradwood.net/go-easyops/utils"
 	"os"
 	"sync"
+
+	"golang.conradwood.net/go-easyops/prometheus"
+	"golang.conradwood.net/go-easyops/utils"
+)
+
+const (
+	MAX_LOG_FILES = 9
 )
 
 var (
@@ -63,6 +68,18 @@ func rotate() {
 	}
 
 	fmt.Printf("[rotate] rotating...\n")
+	for i := (MAX_LOG_FILES - 1); i > 0; i-- {
+		shift_filename := fmt.Sprintf("%s.%d", *logfileName, i)
+		if !utils.FileExists(shift_filename) {
+			continue
+		}
+		newfilename := fmt.Sprintf("%s.%d", *logfileName, (i + 1))
+		err = os.Rename(shift_filename, newfilename)
+		if err != nil {
+			fmt.Printf("failed to shift: %s\n", err)
+		}
+
+	}
 	newFilename := fmt.Sprintf("%s.1", *logfileName)
 	os.Remove(newFilename)
 	err = os.Rename(*logfileName, newFilename)

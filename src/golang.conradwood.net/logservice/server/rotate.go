@@ -6,6 +6,8 @@ import (
 	"os"
 	"sync"
 
+	"golang.conradwood.net/go-easyops/authremote"
+	"golang.conradwood.net/go-easyops/linux"
 	"golang.conradwood.net/go-easyops/prometheus"
 	"golang.conradwood.net/go-easyops/utils"
 )
@@ -15,6 +17,8 @@ const (
 )
 
 var (
+	bzip_chan = make(chan bool, 100)
+	bzip_lock sync.Mutex
 	sizeGauge = prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
 			Name: "logservice_filesize",
@@ -66,17 +70,28 @@ func rotate() {
 	if size < maxmb {
 		return
 	}
+	bzip_lock.Lock()
+	defer bzip_lock.Unlock()
 
 	fmt.Printf("[rotate] rotating...\n")
 	for i := (MAX_LOG_FILES - 1); i > 0; i-- {
 		shift_filename := fmt.Sprintf("%s.%d", *logfileName, i)
-		if !utils.FileExists(shift_filename) {
-			continue
+		if utils.FileExists(shift_filename) {
+			newfilename := fmt.Sprintf("%s.%d", *logfileName, (i + 1))
+			err = os.Rename(shift_filename, newfilename)
+			if err != nil {
+				fmt.Printf("failed to shift: %s\n", err)
+			}
 		}
-		newfilename := fmt.Sprintf("%s.%d", *logfileName, (i + 1))
-		err = os.Rename(shift_filename, newfilename)
-		if err != nil {
-			fmt.Printf("failed to shift: %s\n", err)
+
+		// shift the .bz2 files, if any
+		shift_filename = fmt.Sprintf("%s.%d.bz2", *logfileName, i)
+		if utils.FileExists(shift_filename) {
+			newfilename := fmt.Sprintf("%s.%d.bz2", *logfileName, (i + 1))
+			err = os.Rename(shift_filename, newfilename)
+			if err != nil {
+				fmt.Printf("failed to shift: %s\n", err)
+			}
 		}
 
 	}
@@ -96,5 +111,36 @@ func rotate() {
 		fmt.Printf("[rotate] Failed to open logfile: %s\n", err)
 		return
 	}
+	bzip_chan <- true
 
+}
+
+func bzipp_loop() {
+	for {
+		<-bzip_chan
+		bzipper()
+	}
+}
+func bzipper() {
+	bzip_lock.Lock()
+	defer bzip_lock.Unlock()
+	for i := (MAX_LOG_FILES - 1); i > 0; i-- {
+		to_zip_file := fmt.Sprintf("%s.%d", *logfileName, i)
+		if !utils.FileExists(to_zip_file) {
+			continue
+		}
+		zip_file := fmt.Sprintf("%s.%d.bz2", *logfileName, i)
+		if utils.FileExists(zip_file) {
+			ctx := authremote.Context()
+			utils.LogFault(ctx, "logfiles out of order", fmt.Sprintf("Zipping file %s: %s exists already", zip_file, to_zip_file))
+			break
+		}
+		l := linux.New()
+		cmd := []string{"/usr/bin/bzip2", to_zip_file}
+		out, err := l.SafelyExecute(cmd, nil)
+		if err != nil {
+			fmt.Printf("Failed to pbzip: %s\n%s\n", err, string(out))
+			break
+		}
+	}
 }

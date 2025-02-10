@@ -36,7 +36,8 @@ func init() {
 }
 func rotate_loop() {
 	for {
-		utils.RandomStall(2)
+		<-bzip_chan
+		bzipper()
 	}
 
 }
@@ -116,12 +117,6 @@ func rotate() {
 
 }
 
-func bzipp_loop() {
-	for {
-		<-bzip_chan
-		bzipper()
-	}
-}
 func bzipper() {
 	bzip_lock.Lock()
 	defer bzip_lock.Unlock()

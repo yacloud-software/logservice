@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"sync"
+	"time"
 
 	"golang.conradwood.net/go-easyops/authremote"
 	"golang.conradwood.net/go-easyops/linux"
@@ -136,6 +137,7 @@ func bzipper() {
 			break
 		}
 		l := linux.New()
+		l.SetMaxRuntime(time.Duration(10) * time.Minute)
 		cmd := []string{"/usr/bin/bzip2", to_zip_file}
 		out, err := l.SafelyExecute(cmd, nil)
 		if err != nil {

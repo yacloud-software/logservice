@@ -18,9 +18,10 @@ const (
 )
 
 var (
-	bzip_chan = make(chan bool, 100)
-	bzip_lock sync.Mutex
-	sizeGauge = prometheus.NewGaugeVec(
+	debug_rotate = flag.Bool("debug_rotate", false, "debug rotate code - DO NOT USE IN PRODUCTION")
+	bzip_chan    = make(chan bool, 100)
+	bzip_lock    sync.Mutex
+	sizeGauge    = prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
 			Name: "logservice_filesize",
 			Help: "V=1 UNIT=decbytes DESC=size of logfiles",
@@ -35,6 +36,8 @@ func init() {
 	prometheus.MustRegister(sizeGauge)
 }
 func rotate_loop() {
+	time.Sleep(time.Duration(3) * time.Second)
+	bzipper()
 	for {
 		<-bzip_chan
 		bzipper()
@@ -69,6 +72,7 @@ func rotate() {
 	// get the size
 	size = fi.Size()
 	maxmb = (int64(*maxsize) * 1024 * 1024)
+	//	fmt.Printf("Size %iMbyte vs Max %iMbyte\n", size/1024/1024, *maxsize)
 	if size < maxmb {
 		return
 	}
@@ -113,6 +117,7 @@ func rotate() {
 		fmt.Printf("[rotate] Failed to open logfile: %s\n", err)
 		return
 	}
+	fmt.Printf("Done rotating...\n")
 	bzip_chan <- true
 
 }
@@ -120,6 +125,9 @@ func rotate() {
 func bzipper() {
 	bzip_lock.Lock()
 	defer bzip_lock.Unlock()
+	if *debug_rotate {
+		fmt.Printf("Starting zip background thread\n")
+	}
 	for i := (MAX_LOG_FILES - 1); i > 0; i-- {
 		to_zip_file := fmt.Sprintf("%s.%d", *logfileName, i)
 		if !utils.FileExists(to_zip_file) {
@@ -140,4 +148,8 @@ func bzipper() {
 			break
 		}
 	}
+	if *debug_rotate {
+		fmt.Printf("background bzip thread complete\n")
+	}
+
 }

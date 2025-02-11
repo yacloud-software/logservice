@@ -147,6 +147,7 @@ func bzipper() {
 			fmt.Printf("Failed to pbzip: %s\n%s\n", err, string(out))
 			break
 		}
+		os.Chmod(zip_file, 0777)
 	}
 	if *debug_rotate {
 		fmt.Printf("background bzip thread complete\n")

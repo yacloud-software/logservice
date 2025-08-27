@@ -4,7 +4,7 @@
 */
 
 /* geninfo:
-   filename  : protos/golang.conradwood.net/apis/logservice/logservice.proto
+   filename  : golang.conradwood.net/apis/logservice/logservice.proto
    gopackage : golang.conradwood.net/apis/logservice
    importname: ai_0
    clientfunc: GetLogService

@@ -6,6 +6,13 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"net"
+	"os"
+	"path/filepath"
+	"strings"
+	"sync"
+	"time"
+
 	"golang.conradwood.net/apis/common"
 	pb "golang.conradwood.net/apis/logservice"
 	"golang.conradwood.net/go-easyops/cmdline"
@@ -16,12 +23,6 @@ import (
 	"golang.conradwood.net/logservice/stack"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/peer"
-	"net"
-	"os"
-	"path/filepath"
-	"strings"
-	"sync"
-	"time"
 )
 
 const (
@@ -101,9 +102,7 @@ func main() {
 	sd.SetRegister(st)
 	sd.SetNoAuth()
 	err = server.ServerStartup(sd)
-	if err != nil {
-		fmt.Printf("failed to start server: %s\n", err)
-	}
+	utils.Bail("failed to start server: %s\n", err)
 	fmt.Printf("Done\n")
 	return
 

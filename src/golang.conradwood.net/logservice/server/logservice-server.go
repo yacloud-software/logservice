@@ -95,10 +95,12 @@ func st(server *grpc.Server) error {
 func main() {
 	var err error
 	flag.Parse() // parse stuff. see "var" section above
+   server.SetHealth(common.Health_STARTING)
 	prometheus.MustRegister(reqCounter, failCounter, lineCounter, byteCounter)
 	go rotate_loop()
 	sd := server.NewServerDef()
 	sd.SetPort(*port)
+sd.SetOnStartupCallback(startup)
 	sd.SetRegister(st)
 	sd.SetNoAuth()
 	err = server.ServerStartup(sd)
@@ -107,6 +109,10 @@ func main() {
 	return
 
 }
+func startup() {
+	server.SetHealth(common.Health_READY)
+}
+
 
 /**********************************
 * implementing the functions here:
@@ -275,3 +281,5 @@ func (s *LogService) CloseLog(ctx context.Context, req *pb.CloseLogRequest) (*co
 	go checkPanic(req.AppDef, ls.Get())
 	return &common.Void{}, nil
 }
+
+
